@@ -311,3 +311,23 @@ void instantiateQueue(queue *q, int n) {
 void deInstantiate(queue *q) { //frees queue
     free(q->buffer_array);
 }
+
+void addToSocket(queue *q, int item) {
+    sem_wait(&q->slots); //P() on slots
+    sem_wait(&q->mutex); //P() on mutex
+    q->buffer_array[(++q->last) % (q->max_capacity)] = item; //critical code
+    q->size++; //critical code
+    sem_post(&q->mutex); //V() on mutex to free it up
+    sem_post(&q->items); //V() on items to free it up
+}
+
+int removeFromSocket(queue *q) { //removes from socket to service client
+    int item;
+    sem_wait(&q->items); //P() on items
+    sem_wait(&q->mutex); //P() on mutex
+    item = q->buffer_array[(++q->first) % (q->max_capacity)]; //critical code
+    q->size--; //critical code
+    sem_post(&q->mutex); //V() on mutex to free it up for others
+    sem_post(&q->slots); //V() on slots to free it up
+    return item;
+}
