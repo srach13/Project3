@@ -52,7 +52,88 @@ typedef struct threadArg {
     char **dictionary_words;
 } threadArg;
 
-int main() {
-    printf("Hello, World!\n");
-    return 0;
+//PROTOTYPES
+void instantiateQueue(queue *, int); //instantiate queue
+void deInstantiate(queue *); //deInstantiate queue
+void addToSocket(queue *, int); //add to socket
+int removeFromSocket(queue *); //remove from socket
+int getListenFD(char *); //listen fd
+void *serviceClient(void *); //services the client with the thread
+ssize_t readLine(int , void *, size_t); //read line
+char **makeDictionary(char *); //makes the dictionary into pointer
+
+int main (int argc, char **argv) {
+    pthread_t threads[NUM_WORKERS];
+    threadArg threadArgument; //thread
+    int newSocket, welcomeSocket; //listening and connected socket descriptor
+    int i;
+    sockaddr client_address; //client address
+    socklen_t client_address_size; //size of client address
+    char client_name[MAX_LINE]; //client name
+    char client_port[MAX_LINE]; //client port
+    char *port; //port
+    char *dictionaryName; //dictionary name
+    char **dictionaryWords; //list of dictionary words
+    void *ret;
+    queue q; //queue of socket descriptors
+
+    if (argc < 2) { //neither given
+        port = DEFAULT_PORT_STR;
+        dictionaryName = DICT;
+    } else if (argc < 3) { //only dictionary name
+        port = DEFAULT_PORT_STR;
+        dictionaryName = argv[2];
+    } else { //port and dictionary given
+        port = argv[1];
+        dictionaryName = argv[2];
+    }
+
+    newSocket = getListenFD(port); //socket descriptor
+
+    instantiateQueue(&q, 20); //queue made
+
+    if ((dictionaryWords = makeDictionary(dictionaryName)) == NULL) { //error opening dictionary
+        fprintf(stderr, "Error: Couldn't open dictionary.\n"); //error message
+        return EXIT_FAILURE; //exit failure notice
+    }
+
+    threadArgument.q = &q; //worker thread queue
+    threadArgument.dictionary_words = dictionaryWords; //worker thread dictionary
+
+    //create worker threads
+    for (i = 0; i < NUM_WORKERS; i++) {
+        if (pthread_create(&threads[i], NULL, serviceClient, &threadArgument) != 0) {
+            fprintf(stderr, "error creating thread.\n");
+            return EXIT_FAILURE;
+        }
+    }
+
+    while (1) {
+        client_address_size = sizeof(client_address);
+        if ((welcomeSocket = accept(newSocket, (sockaddr *) &client_address, &client_address_size)) == -1) { //accept connection
+            fprintf(stderr, "accept error\n");
+            continue;
+        }
+
+        if (getnameinfo((sockaddr *) & client_address, client_address_size, client_name, MAX_LINE, client_port, MAX_LINE, 0) != 0) { //name info of connection
+            fprintf(stderr, "error getting name information about client\n");
+        } else {
+            printf("accepted connection from %s: %s\n", client_name, client_port);
+        }
+
+        addToSocket(&q, welcomeSocket); //add client to socket
+    }
+
+    // join threads
+    for (i = 0; i < NUM_WORKERS; i++) {
+        if (pthread_join(threads[i], &ret) != 0) {
+            fprintf(stderr, "join error\n");
+            return EXIT_FAILURE;
+        }
+    }
+
+    free(dictionaryWords);
+
+    return EXIT_SUCCESS;
 }
+
