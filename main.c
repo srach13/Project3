@@ -137,3 +137,45 @@ int main (int argc, char **argv) {
     return EXIT_SUCCESS;
 }
 
+/* given a port number or service as string,
+returns a descriptor to pass on to accept() */
+int getListenFD(char *port) {
+    int listenFD, status;
+    addrinfo hints, *res, *p;
+
+    memset (&hints, 0, sizeof(hints));
+    // TCP
+    hints.ai_socktype = SOCK_STREAM;
+    // IPv4
+    hints.ai_family = AF_INET;
+
+    if ((status = getaddrinfo(NULL, port, &hints, &res)) != 0) {
+        fprintf(stderr, "getaddrinfo error %s\n", gai_strerror(status));
+        exit(EXIT_GET_ADDRESS_INFO_ERROR);
+    }
+
+    /* try to bind to the first available address/port in the list
+    if we fail, try the next one */
+    for (p = res; p != NULL; p = p->ai_next) {
+        if ((listenFD = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0)
+            continue;
+
+        if (bind(listenFD, p->ai_addr, p->ai_addrlen) == 0)
+            break;
+    }
+
+    // free up memory
+    freeaddrinfo(res);
+
+    if (p == NULL)
+        exit(EXIT_BIND_FAILURE);
+
+    if (listen(listenFD, BACKLOG) < 0) {
+        close(listenFD);
+        exit(EXIT_LISTEN_FAILURE);
+    }
+
+    return listenFD;
+}
+
+
