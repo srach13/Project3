@@ -296,3 +296,14 @@ char **makeDictionary(char *dictionaryName) {
     dict[i] = NULL;
     return dict;
 }
+
+//instantiates queue
+void instantiateQueue(queue *q, int n) {
+    q->buffer_array = calloc(n, sizeof(int)); //capacity is n
+    q->max_capacity = n; //size is 0
+    q->size = 0; //empty buffer if front == rear
+    q->first = q->last = 0; //binary sem for locking
+    sem_init(&q->mutex, 0, 1); // initially buf has n empty slots
+    sem_init(&q->slots, 0, n); // initially buf has 0 items
+    sem_init(&q->items, 0, 0); //items set to 0
+}
