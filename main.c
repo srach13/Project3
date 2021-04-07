@@ -307,3 +307,7 @@ void instantiateQueue(queue *q, int n) {
     sem_init(&q->slots, 0, n); // initially buf has 0 items
     sem_init(&q->items, 0, 0); //items set to 0
 }
+
+void deInstantiate(queue *q) { //frees queue
+    free(q->buffer_array);
+}
