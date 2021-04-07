@@ -270,3 +270,29 @@ ssize_t readLine(int fd, void *buffer, size_t n) {
     return totRead;
 }
 
+//makes the dictionary that'll be shared by all threads
+char **makeDictionary(char *dictionaryName) {
+    FILE *fp;
+    char line[MAX_LINE];
+    char **dict;
+    int i = 0;
+
+    if((dict = malloc(DICT_SIZE * sizeof(char *))) == NULL) { //allocating array
+        fprintf(stderr, "error allocating dictionary array.\n");
+        return NULL;
+    }
+
+    fp = fopen(dictionaryName, "r"); //opens file
+    while(fgets(line, sizeof(line), fp)) {
+        if((dict[i] = malloc(strlen(line) * sizeof(char *) + 1)) == NULL)//puts word into array
+        {
+            fprintf(stderr, "error loading word into dict array.\n");
+            return NULL;
+        }
+
+        strncpy(dict[i++], line, strlen(line) - 1); //takes away new line character
+    }
+    fclose(fp);
+    dict[i] = NULL;
+    return dict;
+}
