@@ -1,6 +1,9 @@
-# Project3
+# Project3: Networked Spell Checker
 
 This project is a multithreaded networked spell checker. 
+
+DESIGN
+
 Using this program, a client can connect to the server and send words. The server then responds to each word with either `OK` or `MISSPELLED`. 
 The main thread handles the program setup. It parses the command line options and sets up the dictionary. 
 The main thread also establishes `N` worker threads to service client requests and a single logger thread to handle logging activities. 
@@ -20,3 +23,9 @@ Whenever a worker receives a message from a client, it sends the spell check res
 The log queue is also protected by a mutex lock and condition variables, since N+1 threads are working on it.
 The logger thread continuously checks the log queue for new entries, and writes them to a log file. 
 As mentioned above, log queue is protected by a mutex lock and condition variables.
+
+HOW TO USE
+
+After building the program in a Linux environment, run the "spellchecker" executable file to begin the program. 
+Once the program has executed successfully, the server will begin to run on the current machine and begin to accept any connection to the spell check server.
+Once connected, the server will now begin to spell check any words you enter. NOTE: the server will only handle one word at a time.
