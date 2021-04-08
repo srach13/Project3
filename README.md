@@ -29,3 +29,9 @@ HOW TO USE
 After building the program in a Linux environment, run the "spellchecker" executable file to begin the program. 
 Once the program has executed successfully, the server will begin to run on the current machine and begin to accept any connection to the spell check server.
 Once connected, the server will now begin to spell check any words you enter. NOTE: the server will only handle one word at a time.
+
+TESTING
+
+To test my spellchecker, I used the netcat program as a client. When testing, I used multiple instances of clients requesting spell check services at the same
+time, i.e. multiple clients. These clients are running from multiple computer system simultaneously. I connected to the client using the command Nc 127.0.0.1 8888.
+Then, I was able to run my program using ./spellchecker 8888.
